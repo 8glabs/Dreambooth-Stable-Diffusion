@@ -15,7 +15,7 @@ from contextlib import contextmanager, nullcontext
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
-
+from gcloud import storage
 
 def chunk(it, size):
     it = iter(it)
@@ -174,7 +174,18 @@ def main():
         choices=["full", "autocast"],
         default="autocast"
     )
-
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="output file name",
+        default="pic"
+    )
+    parser.add_argument(
+        "--bucket",
+        type=str,
+        help="output to google cloud bucket",
+        default="imageappco-business"
+    )
 
     parser.add_argument(
         "--embedding_path", 
@@ -272,15 +283,19 @@ def main():
                     grid = rearrange(grid, 'n b c h w -> (n b) c h w')
                     
                     for i in range(grid.size(0)):
-                        save_image(grid[i, :, :, :], os.path.join(outpath,opt.prompt+'_{}.png'.format(i)))
+                        save_image(grid[i, :, :, :], os.path.join(outpath,opt.output+'_{}.png'.format(i)))
                     grid = make_grid(grid, nrow=n_rows)
 
                     # to image
                     grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-                    Image.fromarray(grid.astype(np.uint8)).save(os.path.join(outpath, f'{prompt.replace(" ", "-")}-{grid_count:04}.jpg'))
+                    Image.fromarray(grid.astype(np.uint8)).save(os.path.join(outpath, f'{opt.output.replace(" ", "-")}-{grid_count:04}.jpg'))
                     grid_count += 1
                     
-                    
+                    client = storage.Client()
+                    bucket = client.get_bucket(opt.bucket)
+                    blob = bucket.blob(f'{opt.output.replace(" ", "-")}-{grid_count:04}.jpg')
+                    blob.upload_from_filename(f'{opt.output.replace(" ", "-")}-{grid_count:04}.jpg')
+
 
                 toc = time.time()
 
