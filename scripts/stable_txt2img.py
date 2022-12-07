@@ -301,7 +301,7 @@ def main():
                     grid = 255. * \
                         rearrange(grid, 'c h w -> h w c').cpu().numpy()
                     Image.fromarray(grid.astype(np.uint8)).save(os.path.join(
-                        outpath, f'{opt.output.replace(" ", "-")}-{grid_count:04}.jpg'))
+                        outpath, f'{opt.output.replace(" ", "-")}-{grid_count:04}.png'), "PNG")
                     grid_count += 1
 
                     fh = open(os.path.join(
@@ -312,12 +312,12 @@ def main():
                     client = storage.Client()
                     bucket = client.get_bucket(opt.bucket)
                     blob = bucket.blob(os.path.join(
-                        opt.output, f'{opt.output.replace(" ", "-")}-{grid_count:04}.jpg'))
+                        opt.output, f'{opt.output.replace(" ", "-")}-{grid_count:04}.png'))
                     blob.upload_from_filename(os.path.join(
-                        outpath, f'{opt.output.replace(" ", "-")}-{grid_count:04}.jpg'))
+                        outpath, f'{opt.output.replace(" ", "-")}-{grid_count:04}.png'))
                     blob.upload_from_filename(os.path.join(
                         outpath, f'{opt.output.replace(" ", "-")}-{grid_count:04}.text'))
-
+                        
                 toc = time.time()
 
     print(f"Your samples are ready and waiting for you here: \n{outpath} \n"
